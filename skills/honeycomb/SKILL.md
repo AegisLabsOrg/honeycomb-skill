@@ -1,46 +1,50 @@
 ---
 name: honeycomb
-description: 使用 aegis_honeycomb 状态管理库编写 Flutter 代码。当用户提到 Honeycomb、StateRef、Computed、Effect、HoneycombScope 或 HoneycombConsumer 时自动使用。
-argument-hint: [描述你要创建的状态或功能]
+description: Write Flutter code using the aegis_honeycomb state management library. Auto-activates when user mentions Honeycomb, StateRef, Computed, Effect, HoneycombScope, or HoneycombConsumer. / 使用 aegis_honeycomb 状态管理库编写 Flutter 代码。当用户提到 Honeycomb、StateRef、Computed、Effect、HoneycombScope 或 HoneycombConsumer 时自动使用。
+argument-hint: [describe the state or feature you want to create / 描述你要创建的状态或功能]
 ---
 
-# Honeycomb 状态管理规范
+# Honeycomb State Management Reference
 
-使用 `aegis_honeycomb` 库编写代码时，严格遵循以下规范。
+When writing code with `aegis_honeycomb`, strictly follow the patterns below.
 
-## 安装
+---
+
+## Installation / 安装
 
 ```yaml
 dependencies:
   aegis_honeycomb: ^1.1.1
 ```
 
-## 核心概念
+---
 
-### StateRef — 可读写状态
+## Core Concepts / 核心概念
+
+### StateRef — Read/Write State / 可读写状态
 
 ```dart
-// 定义（全局）
+// Define globally / 全局定义
 final counterState = StateRef(0);
 final userState = StateRef<User?>(null);
 
-// 读取
+// Read / 读取
 final count = container.read(counterState);
 
-// 写入
+// Write / 写入
 container.write(counterState, 1);
 
-// 函数式更新（1.1.1+）
+// Functional update (1.1.1+) / 函数式更新
 container.update(counterState, (value) => value + 1);
 ```
 
-### Computed — 派生状态（自动依赖追踪）
+### Computed — Derived State / 派生状态（自动依赖追踪）
 
 ```dart
-// 定义
+// Single dependency / 单依赖
 final doubledCounter = Computed((watch) => watch(counterState) * 2);
 
-// 多依赖
+// Multiple dependencies / 多依赖
 final fullName = Computed((watch) {
   final first = watch(firstNameState);
   final last = watch(lastNameState);
@@ -48,22 +52,22 @@ final fullName = Computed((watch) {
 });
 ```
 
-### Effect — 一次性事件（不存储历史）
+### Effect — One-time Events / 一次性事件（不存储历史）
 
 ```dart
-// 定义
+// Define / 定义
 final toastEffect = Effect<String>();
 
-// 触发
-container.emit(toastEffect, '保存成功');
+// Emit / 触发
+container.emit(toastEffect, 'Saved successfully');
 
-// 监听（在 UI 层）
+// Listen in UI / 在 UI 层监听
 ref.on(toastEffect, (message) {
   ScaffoldMessenger.of(context).showSnackBar(...);
 });
 ```
 
-### EagerComputed — 立即计算的派生状态
+### EagerComputed — Eagerly Evaluated Derived State / 立即计算的派生状态
 
 ```dart
 final searchResults = EagerComputed((watch) {
@@ -72,9 +76,11 @@ final searchResults = EagerComputed((watch) {
 });
 ```
 
-## Flutter 集成
+---
 
-### 应用入口
+## Flutter Integration / Flutter 集成
+
+### App Entry / 应用入口
 
 ```dart
 final appContainer = HoneycombContainer();
@@ -89,7 +95,7 @@ void main() {
 }
 ```
 
-### UI 中读取状态
+### Reading State in UI / UI 中读取状态
 
 ```dart
 HoneycombConsumer(
@@ -100,7 +106,7 @@ HoneycombConsumer(
 )
 ```
 
-### 局部 Scope（依赖注入 / 覆盖）
+### Local Scope (Dependency Injection / Override) / 局部 Scope（依赖注入 / 覆盖）
 
 ```dart
 HoneycombScope(
@@ -111,9 +117,11 @@ HoneycombScope(
 )
 ```
 
-## Context-Free 用法（Service 层）
+---
 
-在非 UI 层（Service、Repository）直接用全局 container：
+## Context-Free Usage (Service Layer) / Context-Free 用法（Service 层）
+
+Access state in pure Dart services without BuildContext:
 
 ```dart
 class UserService {
@@ -129,18 +137,22 @@ class UserService {
 }
 ```
 
-## 最佳实践
+---
 
-1. **StateRef / Computed 定义在全局**，不要放在类内部
-2. **业务逻辑放在 Service 层**，通过 container 访问状态，不依赖 BuildContext
-3. **UI 只负责展示**，用 HoneycombConsumer + ref.watch 响应状态变化
-4. **一次性事件用 Effect**，不要用 StateRef 模拟（避免重复触发）
-5. **不可变集合更新**用 update 方法：
+## Best Practices / 最佳实践
+
+1. **Define StateRef / Computed globally** — not inside classes / **StateRef / Computed 定义在全局**，不要放在类内部
+2. **Business logic in Service layer** — access state via container, no BuildContext dependency / **业务逻辑放在 Service 层**，通过 container 访问状态
+3. **UI only renders** — use HoneycombConsumer + ref.watch / **UI 只负责展示**，用 HoneycombConsumer + ref.watch
+4. **Use Effect for one-time events** — don't simulate with StateRef / **一次性事件用 Effect**，不要用 StateRef 模拟
+5. **Immutable collection updates** / **不可变集合更新**：
    ```dart
    container.update(listState, (list) => [...list, newItem]);
    ```
 
-## 测试
+---
+
+## Testing / 测试
 
 ```dart
 test('counter increments', () {
@@ -151,12 +163,16 @@ test('counter increments', () {
 });
 ```
 
-## 用户请求处理
+---
 
-用户提供的参数：$ARGUMENTS
+## Instructions
 
-根据用户描述，生成符合以上规范的 Honeycomb 代码。包括：
-- StateRef / Computed / Effect 定义
-- Service 层实现（如需要）
-- HoneycombConsumer UI 代码（如需要）
-- 对应的测试代码（如需要）
+The user's request: $ARGUMENTS
+
+Based on the description above, generate idiomatic Honeycomb code including:
+- `StateRef` / `Computed` / `Effect` definitions
+- Service layer implementation (if needed)
+- `HoneycombConsumer` UI code (if needed)
+- Corresponding test code (if needed)
+
+Respond in the same language the user used.
